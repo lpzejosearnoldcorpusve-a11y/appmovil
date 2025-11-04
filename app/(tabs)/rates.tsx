@@ -1,0 +1,10 @@
+import { Text, View } from "react-native"
+
+export default function RatesScreen() {
+  return (
+    <View className="flex-1 bg-slate-900 items-center justify-center">
+      <Text className="text-white text-2xl font-bold">Tarifas</Text>
+      <Text className="text-orange-400 mt-2">Próximamente...</Text>
+    </View>
+  )
+}

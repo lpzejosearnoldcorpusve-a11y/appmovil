@@ -4,7 +4,7 @@
     "slug": "mini-app",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./public/assets/assets/logo.png",
     "scheme": "miniapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,

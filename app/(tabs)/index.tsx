@@ -1,98 +1,199 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import React from "react"
+import {
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native"
+import { AnimatedBackground } from "../../components/AnimatedBackground"
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
-
-export default function HomeScreen() {
+export default function Index() {
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+    <View style={styles.container}>
+      {/* Fondo animado */}
+      <AnimatedBackground />
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
-  );
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Encabezado */}
+        <View style={styles.header}>
+          <Text style={styles.title}>Bienvenido</Text>
+          <Text style={styles.subtitle}>
+            Selecciona una opción del menú inferior
+          </Text>
+        </View>
+
+        {/* Tarjetas de opciones */}
+        <View style={styles.cardsContainer}>
+          {/* Tarjeta Mapas */}
+          <TouchableOpacity
+            style={[styles.card, styles.cardCyan]}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.cardTitle}>🗺️ Mapas</Text>
+            <Text style={styles.cardDescription}>
+              Explora rutas y ubicaciones
+            </Text>
+          </TouchableOpacity>
+
+          {/* Tarjeta Rutas */}
+          <TouchableOpacity
+            style={[styles.card, styles.cardPink]}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.cardTitle}>🚌 Rutas</Text>
+            <Text style={styles.cardDescription}>
+              Planifica tus viajes
+            </Text>
+          </TouchableOpacity>
+
+          {/* Tarjeta Tarifas */}
+          <TouchableOpacity
+            style={[styles.card, styles.cardOrange]}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.cardTitle}>💰 Tarifas</Text>
+            <Text style={styles.cardDescription}>
+              Consulta precios
+            </Text>
+          </TouchableOpacity>
+
+          {/* Tarjeta Horarios */}
+          <TouchableOpacity
+            style={[styles.card, styles.cardPurple]}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.cardTitle}>⏰ Horarios</Text>
+            <Text style={styles.cardDescription}>
+              Revisa los horarios de trufis
+            </Text>
+          </TouchableOpacity>
+
+          {/* Tarjeta Favoritos */}
+          <TouchableOpacity
+            style={[styles.card, styles.cardGreen]}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.cardTitle}>⭐ Favoritos</Text>
+            <Text style={styles.cardDescription}>
+              Tus rutas guardadas
+            </Text>
+          </TouchableOpacity>
+
+          {/* Tarjeta Noticias */}
+          <TouchableOpacity
+            style={[styles.card, styles.cardBlue]}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.cardTitle}>📰 Noticias</Text>
+            <Text style={styles.cardDescription}>
+              Últimas actualizaciones
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Información adicional */}
+        <View style={styles.infoSection}>
+          <Text style={styles.infoTitle}>🚍 Sistema de Transporte</Text>
+          <Text style={styles.infoText}>
+            Encuentra las mejores rutas de trufis y micros en La Paz.
+            Planifica tus viajes de manera eficiente.
+          </Text>
+        </View>
+      </ScrollView>
+    </View>
+  )
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+  container: {
+    flex: 1,
+    backgroundColor: "#0f172a",
   },
-  stepContainer: {
-    gap: 8,
+  scrollContent: {
+    flexGrow: 1,
+    paddingHorizontal: 24,
+    paddingTop: 60,
+    paddingBottom: 40,
+  },
+  header: {
+    alignItems: "center",
+    marginBottom: 48,
+  },
+  title: {
+    color: "#ffffff",
+    fontSize: 36,
+    fontWeight: "bold",
+    marginBottom: 12,
+    textAlign: "center",
+  },
+  subtitle: {
+    color: "#67e8f9",
+    fontSize: 18,
+    textAlign: "center",
+    paddingHorizontal: 20,
+  },
+  cardsContainer: {
+    width: "100%",
+    maxWidth: 448,
+    alignSelf: "center",
+    gap: 16,
+  },
+  card: {
+    backgroundColor: "#1e293b",
+    padding: 24,
+    borderRadius: 16,
+    borderWidth: 2,
+    marginBottom: 16,
+  },
+  cardCyan: {
+    borderColor: "rgba(6, 182, 212, 0.3)",
+  },
+  cardPink: {
+    borderColor: "rgba(236, 72, 153, 0.3)",
+  },
+  cardOrange: {
+    borderColor: "rgba(249, 115, 22, 0.3)",
+  },
+  cardPurple: {
+    borderColor: "rgba(168, 85, 247, 0.3)",
+  },
+  cardGreen: {
+    borderColor: "rgba(34, 197, 94, 0.3)",
+  },
+  cardBlue: {
+    borderColor: "rgba(59, 130, 246, 0.3)",
+  },
+  cardTitle: {
+    color: "#ffffff",
+    fontSize: 20,
+    fontWeight: "bold",
     marginBottom: 8,
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  cardDescription: {
+    color: "#9ca3af",
+    fontSize: 15,
   },
-});
+  infoSection: {
+    marginTop: 32,
+    backgroundColor: "#1e293b",
+    padding: 20,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "rgba(100, 116, 139, 0.3)",
+  },
+  infoTitle: {
+    color: "#ffffff",
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 8,
+  },
+  infoText: {
+    color: "#94a3b8",
+    fontSize: 14,
+    lineHeight: 20,
+  },
+})

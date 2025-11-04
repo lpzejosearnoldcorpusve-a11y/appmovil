@@ -1,35 +1,60 @@
-import { Tabs } from 'expo-router';
-import React from 'react';
-
-import { HapticTab } from '@/components/haptic-tab';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { Tabs } from "expo-router"
+import { Bell, DollarSign, MapPin, Route, User } from "lucide-react-native"; // ← Cambio aquí
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
-
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
-        headerShown: false,
-        tabBarButton: HapticTab,
-      }}>
+        tabBarActiveTintColor: "#06b6d4",
+        tabBarInactiveTintColor: "#64748b",
+        tabBarStyle: {
+          backgroundColor: "#0f172a",
+          borderTopColor: "#1e293b",
+        },
+        headerStyle: {
+          backgroundColor: "#0f172a",
+        },
+        headerTintColor: "#06b6d4",
+        headerTitleStyle: {
+          fontWeight: "bold",
+        },
+      }}
+    >
       <Tabs.Screen
-        name="index"
+        name="maps"
         options={{
-          title: 'Home',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
+          title: "Mapas",
+          tabBarIcon: ({ color, size }) => <MapPin size={size} color={color} />,
         }}
       />
       <Tabs.Screen
-        name="explore"
+        name="routes"
         options={{
-          title: 'Explore',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
+          title: "Rutas",
+          tabBarIcon: ({ color, size }) => <Route size={size} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="rates"
+        options={{
+          title: "Tarifas",
+          tabBarIcon: ({ color, size }) => <DollarSign size={size} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="notifications"
+        options={{
+          title: "Notificaciones",
+          tabBarIcon: ({ color, size }) => <Bell size={size} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="profile"
+        options={{
+          title: "Perfil",
+          tabBarIcon: ({ color, size }) => <User size={size} color={color} />,
         }}
       />
     </Tabs>
-  );
+  )
 }
