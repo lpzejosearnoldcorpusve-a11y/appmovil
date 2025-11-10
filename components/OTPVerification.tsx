@@ -1,4 +1,6 @@
-import React, { useState } from "react"
+import * as Linking from "expo-linking"
+import { useRouter } from "expo-router"
+import React, { useEffect, useState } from "react"
 import {
   Image,
   KeyboardAvoidingView,
@@ -22,6 +24,27 @@ export function OTPVerification({ email, onVerify, onResend, type }: OTPVerifica
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   const [resendLoading, setResendLoading] = useState(false)
+  const router = useRouter()
+
+  useEffect(() => {
+    const handleDeepLink = (event: Linking.EventType) => {
+      const url = event.url
+      const { path, queryParams } = Linking.parse(url)
+
+      if (path === "auth/callback" && queryParams?.access_token) {
+        // Handle the access token
+        console.log("Access Token:", queryParams.access_token)
+        // Redirect the user to the desired screen
+        router.push("/(auth)/login")
+      }
+    }
+
+    const subscription = Linking.addEventListener("url", handleDeepLink)
+
+    return () => {
+      subscription.remove()
+    }
+  }, [])
 
   const handleComplete = async (otp: string) => {
     try {
