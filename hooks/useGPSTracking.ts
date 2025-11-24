@@ -2,17 +2,41 @@
 
 import { useEffect, useState } from 'react'
 
-export interface GPSData {
-  imei: string
+export interface Vehicle {
+  id: string
+  placa: string
+  marca: string
+  tipoVehiculo: string
+}
+
+export interface GPSPosition {
+  id: string
+  vehiculoId: string
   latitud: number
   longitud: number
   altitud: number
   satelites: number
   velocidad: number
   direccion: number
+  estadoMotor: string
+  nivelCombustible: number | null
+  timestamp: string
+  precision: number | null
+  proveedor: string
 }
 
-export function useGPSTracking(imei?: string, refreshInterval = 5000) {
+export interface GPSData {
+  vehiculo: Vehicle
+  posicion: GPSPosition
+}
+
+export interface GPSResponse {
+  success: boolean
+  data: GPSData[]
+  timestamp: string
+}
+
+export function useGPSTracking(vehiculoId?: string, refreshInterval = 5000) {
   const [vehicles, setVehicles] = useState<GPSData[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -21,19 +45,22 @@ export function useGPSTracking(imei?: string, refreshInterval = 5000) {
     const fetchGPSData = async () => {
       try {
         setLoading(true)
-        const response = await fetch('https://transporte-pearl.vercel.app/api/gps/track')
+        const response = await fetch('https://transporte-pearl.vercel.app/api/gps/positions')
 
         if (!response.ok) {
           throw new Error('Error fetching GPS data')
         }
 
-        const data = await response.json()
+        const data: GPSResponse = await response.json()
 
-        // Handle both single object and array responses
-        let vehicleData = Array.isArray(data) ? data : [data]
+        if (!data.success) {
+          throw new Error('API returned unsuccessful response')
+        }
 
-        if (imei) {
-          vehicleData = vehicleData.filter((v) => v.imei === imei)
+        let vehicleData = data.data
+
+        if (vehiculoId) {
+          vehicleData = vehicleData.filter((v) => v.vehiculo.id === vehiculoId)
         }
 
         setVehicles(vehicleData)
@@ -49,7 +76,7 @@ export function useGPSTracking(imei?: string, refreshInterval = 5000) {
     const interval = setInterval(fetchGPSData, refreshInterval)
 
     return () => clearInterval(interval)
-  }, [refreshInterval, imei])
+  }, [refreshInterval, vehiculoId])
 
   return { vehicles, loading, error }
 }

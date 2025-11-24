@@ -1,6 +1,7 @@
 import { MapContainer } from "@/components/map/MapContainer"
 import { useGPSTracking } from "@/hooks/useGPSTracking"
 import { useRoutes } from "@/hooks/useRoutes"
+import AsyncStorage from '@react-native-async-storage/async-storage'
 import React, { useEffect, useState } from "react"
 import { Animated, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from "react-native"
 
@@ -12,8 +13,8 @@ export default function MapsScreen() {
   const { categories, loading, error } = useRoutes()
   console.log("📊 Routes data:", { categoriesCount: categories?.length, loading, error })
 
-  const [selectedRoutes, setSelectedRoutes] = useState<string[]>([])
-  const [showRoutes, setShowRoutes] = useState(false)
+  // less friction: remove per-route selection, only select transport type
+  const showRoutes = true
   const [transportType, setTransportType] = useState<TransportType>("all")
   const [isMapReady, setIsMapReady] = useState(false)
   const [showGPSVehicles, setShowGPSVehicles] = useState(false)
@@ -64,33 +65,7 @@ export default function MapsScreen() {
     }
   }, [loading, error, categories])
 
-  const toggleRoute = (routeId: string) => {
-    setSelectedRoutes(prev =>
-      prev.includes(routeId)
-        ? prev.filter(id => id !== routeId)
-        : [...prev, routeId]
-    )
-  }
-
-  const toggleShowRoutes = () => {
-    const newShowRoutes = !showRoutes
-    setShowRoutes(newShowRoutes)
-
-    // Animate the controls with improved timing
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: newShowRoutes ? 0.7 : 1,
-        duration: 400,
-        useNativeDriver: true,
-      }),
-      Animated.spring(slideAnim, {
-        toValue: newShowRoutes ? 1 : 0,
-        tension: 100,
-        friction: 8,
-        useNativeDriver: true,
-      }),
-    ]).start()
-  }
+  // showRoutes controls whether the polylines are displayed at all (defaults to true)
 
   const changeTransportType = (type: TransportType) => {
     // Add haptic feedback animation
@@ -108,8 +83,18 @@ export default function MapsScreen() {
     ]).start()
 
     setTransportType(type)
-    setSelectedRoutes([]) // Clear selection when changing type
+    // persist selection for user convenience
+    AsyncStorage.setItem('transportType', type)
   }
+
+  // restore transport type on mount
+  useEffect(() => {
+    AsyncStorage.getItem('transportType').then(val => {
+      if (val && (val === 'all' || val === 'minibuses' || val === 'telefericos')) {
+        setTransportType(val as TransportType)
+      }
+    }).catch(() => {})
+  }, [])
 
   const toggleGPSVehicles = () => {
     setShowGPSVehicles(!showGPSVehicles)
@@ -120,9 +105,7 @@ export default function MapsScreen() {
     return categories.filter(cat => cat.id === transportType)
   }
 
-  const displayedRoutes = getFilteredCategories().flatMap(cat => cat.routes).filter(route =>
-    selectedRoutes.includes(route.id)
-  )
+  const displayedRoutes = getFilteredCategories().flatMap(cat => cat.routes)
 
   // Loading spinner animation
   const spinValue = React.useRef(new Animated.Value(0)).current
@@ -204,44 +187,39 @@ export default function MapsScreen() {
         />
         </Animated.View>
 
-        {/* Transport Type Selector */}
+        {/* Compact transport selector: small and near the location button */}
         <Animated.View
           style={[
-            styles.transportSelector,
+            styles.transportSelectorSmall,
             {
               opacity: controlsFadeAnim,
               transform: [{ translateY: controlsSlideAnim }],
             },
           ]}
         >
+          <Text style={styles.selectorLabel}>Tipo</Text>
           <TouchableOpacity
-            style={[styles.transportButton, transportType === "all" && styles.transportButtonActive]}
+            style={[styles.smallTransportButton, transportType === "all" && styles.smallTransportButtonActive]}
             onPress={() => changeTransportType("all")}
             activeOpacity={0.8}
           >
-            <Text style={[styles.transportButtonText, transportType === "all" && styles.transportButtonTextActive]}>
-              Todos
-            </Text>
+            <Text style={[styles.smallTransportButtonText, transportType === "all" && styles.smallTransportButtonTextActive]}>Todos</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.transportButton, transportType === "minibuses" && styles.transportButtonActive]}
+            style={[styles.smallTransportButton, transportType === "minibuses" && styles.smallTransportButtonActive]}
             onPress={() => changeTransportType("minibuses")}
             activeOpacity={0.8}
           >
-            <Text style={[styles.transportButtonText, transportType === "minibuses" && styles.transportButtonTextActive]}>
-              Minibuses
-            </Text>
+            <Text style={[styles.smallTransportButtonText, transportType === "minibuses" && styles.smallTransportButtonTextActive]}>Minibuses</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.transportButton, transportType === "telefericos" && styles.transportButtonActive]}
+            style={[styles.smallTransportButton, transportType === "telefericos" && styles.smallTransportButtonActive]}
             onPress={() => changeTransportType("telefericos")}
             activeOpacity={0.8}
           >
-            <Text style={[styles.transportButtonText, transportType === "telefericos" && styles.transportButtonTextActive]}>
-              Teleféricos
-            </Text>
+            <Text style={[styles.smallTransportButtonText, transportType === "telefericos" && styles.smallTransportButtonTextActive]}>Teleféricos</Text>
           </TouchableOpacity>
         </Animated.View>
 
@@ -256,80 +234,18 @@ export default function MapsScreen() {
         ]}
       >
         <TouchableOpacity
-          style={[styles.controlButton, styles.primaryButton, styles.leftButton]}
-          onPress={toggleShowRoutes}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.primaryButtonText}>
-            {showRoutes ? "Ocultar Rutas" : "Mostrar Rutas"}
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.controlButton, styles.secondaryButton, styles.rightButton]}
+          style={[styles.controlButtonSmall, styles.secondaryButton]}
           onPress={toggleGPSVehicles}
           activeOpacity={0.8}
         >
           <Text style={styles.secondaryButtonText}>
             {showGPSVehicles ? "Ocultar GPS" : "Mostrar GPS"}
           </Text>
-        </TouchableOpacity>          {showRoutes && (
-            <Animated.View
-              style={[
-                styles.routesPanel,
-                {
-                  opacity: slideAnim,
-                  transform: [{
-                    translateY: slideAnim.interpolate({
-                      inputRange: [0, 1],
-                      outputRange: [100, 0],
-                    }),
-                  }],
-                },
-              ]}
-            >
-              <View style={styles.panelHeader}>
-                <Text style={styles.panelTitle}>
-                  {transportType === "all" ? "Seleccionar Rutas" :
-                   transportType === "minibuses" ? "Minibuses" : "Teleféricos"}
-                </Text>
-                <TouchableOpacity
-                  onPress={() => setSelectedRoutes([])}
-                  style={styles.clearButton}
-                >
-                  <Text style={styles.clearButtonText}>Limpiar</Text>
-                </TouchableOpacity>
-              </View>
-
-              {getFilteredCategories().map(category => (
-                <View key={category.id} style={styles.categorySection}>
-                  <Text style={styles.categoryTitle}>{category.name}</Text>
-                  <View style={styles.routesGrid}>
-                    {category.routes.map(route => (
-                      <TouchableOpacity
-                        key={route.id}
-                        style={[
-                          styles.routeChip,
-                          selectedRoutes.includes(route.id) && styles.routeChipSelected,
-                          { borderColor: route.color || "#6B7280" }
-                        ]}
-                        onPress={() => toggleRoute(route.id)}
-                        activeOpacity={0.7}
-                      >
-                        <View style={[styles.routeColorDot, { backgroundColor: route.color || "#6B7280" }]} />
-                        <Text style={[
-                          styles.routeChipText,
-                          selectedRoutes.includes(route.id) && styles.routeChipTextSelected
-                        ]}>
-                          {route.name}
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-                </View>
-              ))}
-            </Animated.View>
-          )}
+        </TouchableOpacity>
+        
+        {/* NOTE: the full routes panel was removed to keep the UI compact. */}
+        
+        {/* Full routes panel has been removed to keep UI minimal */}
         </Animated.View>
       </SafeAreaView>
     )
@@ -366,10 +282,11 @@ export default function MapsScreen() {
   },
   floatingControls: {
     position: "absolute",
-    top: 50,
-    left: 16,
+    top: 16,
     right: 16,
     zIndex: 1000,
+    flexDirection: "row",
+    gap: 8,
   },
   controlButton: {
     borderRadius: 12,
@@ -485,6 +402,51 @@ export default function MapsScreen() {
     flexDirection: "row",
     justifyContent: "space-between",
     zIndex: 1000,
+  },
+  // compact transport selector located near 'obtener ubicación'
+  transportSelectorSmall: {
+    position: "absolute",
+    top: 80,
+    left: 16,
+    flexDirection: "row",
+    gap: 8,
+    zIndex: 1000,
+  },
+  smallTransportButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    borderRadius: 12,
+    backgroundColor: "rgba(51, 65, 85, 0.95)",
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 4,
+  },
+  smallTransportButtonActive: {
+    backgroundColor: "#06b6d4",
+  },
+  smallTransportButtonText: {
+    color: "#94a3b8",
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  smallTransportButtonTextActive: {
+    color: "#ffffff",
+  },
+  controlButtonSmall: {
+    borderRadius: 10,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    alignItems: "center",
+  },
+  selectorLabel: {
+    color: "#94a3b8",
+    fontSize: 12,
+    fontWeight: "600",
+    marginRight: 8,
+    alignSelf: "center",
   },
   transportButton: {
     flex: 1,

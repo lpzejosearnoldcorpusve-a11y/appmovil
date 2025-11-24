@@ -12,13 +12,27 @@ import { RoutePolyline } from "./RoutePolyline"
 import { ZoomControls } from "./ZoomControls"
 
 interface GPSData {
-  imei: string
-  latitud: number
-  longitud: number
-  altitud: number
-  satelites: number
-  velocidad: number
-  direccion: number
+  vehiculo: {
+    id: string
+    placa: string
+    marca: string
+    tipoVehiculo: string
+  }
+  posicion: {
+    id: string
+    vehiculoId: string
+    latitud: number
+    longitud: number
+    altitud: number
+    satelites: number
+    velocidad: number
+    direccion: number
+    estadoMotor: string
+    nivelCombustible: number | null
+    timestamp: string
+    precision: number | null
+    proveedor: string
+  }
 }
 
 interface GPSMarkerProps {
@@ -26,20 +40,41 @@ interface GPSMarkerProps {
     latitude: number
     longitude: number
   }
-  title: string
-  imei: string
-  velocidad: number
+  vehiculo: {
+    id: string
+    placa: string
+    marca: string
+    tipoVehiculo: string
+  }
+  posicion: {
+    velocidad: number
+    estadoMotor: string
+    timestamp: string
+  }
 }
 
-function GPSMarker({ coordinate, title, imei, velocidad }: GPSMarkerProps) {
+function GPSMarker({ coordinate, vehiculo, posicion }: GPSMarkerProps) {
+  const getVehicleIcon = (tipo: string) => {
+    switch (tipo.toLowerCase()) {
+      case 'cisterna':
+        return '🚚'
+      case 'camion':
+        return '🚛'
+      case 'minibus':
+        return '🚌'
+      default:
+        return '🚐'
+    }
+  }
+
   return (
     <Marker
       coordinate={coordinate}
-      title={title}
-      description={`IMEI: ${imei} | Velocidad: ${velocidad} km/h`}
+      title={`${vehiculo.marca} - ${vehiculo.placa}`}
+      description={`Tipo: ${vehiculo.tipoVehiculo} | Vel: ${posicion.velocidad} km/h | Motor: ${posicion.estadoMotor}`}
     >
       <View style={styles.gpsMarker}>
-        <Text style={styles.gpsMarkerText}>🚐</Text>
+        <Text style={styles.gpsMarkerText}>{getVehicleIcon(vehiculo.tipoVehiculo)}</Text>
       </View>
     </Marker>
   )
@@ -157,14 +192,13 @@ export function MapContainer({ routes = [], showRoutes = false, gpsVehicles = []
         {/* GPS Vehicles markers */}
         {showGPSVehicles && gpsVehicles.map(vehicle => (
           <GPSMarker
-            key={vehicle.imei}
+            key={vehicle.vehiculo.id}
             coordinate={{
-              latitude: vehicle.latitud,
-              longitude: vehicle.longitud,
+              latitude: vehicle.posicion.latitud,
+              longitude: vehicle.posicion.longitud,
             }}
-            title={`Vehículo GPS - ${vehicle.imei}`}
-            imei={vehicle.imei}
-            velocidad={vehicle.velocidad}
+            vehiculo={vehicle.vehiculo}
+            posicion={vehicle.posicion}
           />
         ))}
 
