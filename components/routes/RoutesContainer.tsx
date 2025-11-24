@@ -1,56 +1,56 @@
-import { useRoutes, type TeleficoLine } from "@/hooks/useRoutes"
+import { useRoutes } from "@/hooks/useRoutes"
 import { useState } from "react"
 import { View } from "react-native"
 import { LineDetails } from "./LineDetails"
 import { LinesList } from "./LinesList"
 import { SindicateList } from "./SindicateList"
 
-type ViewState = "sindicates" | "lines" | "details"
+type ViewState = "categories" | "routes" | "details"
 
 export function RoutesContainer() {
-  const { sindicates, selectedSindicate, setSelectedSindicate, selectedLine, setSelectedLine } = useRoutes()
-  const [currentView, setCurrentView] = useState<ViewState>("sindicates")
+  const { categories, selectedCategory, setSelectedCategory, selectedRoute, setSelectedRoute } = useRoutes()
+  const [currentView, setCurrentView] = useState<ViewState>("categories")
 
-  const handleSelectSindicate = (sindicate: any) => {
-    setSelectedSindicate(sindicate)
-    setCurrentView("lines")
+  const handleSelectCategory = (category: any) => {
+    setSelectedCategory(category)
+    setCurrentView("routes")
   }
 
-  const handleSelectLine = (line: TeleficoLine) => {
-    setSelectedLine(line)
+  const handleSelectRoute = (route: any) => {
+    setSelectedRoute(route)
     setCurrentView("details")
   }
 
-  const handleBackFromLines = () => {
-    setCurrentView("sindicates")
-    setSelectedSindicate(null)
+  const handleBackFromRoutes = () => {
+    setCurrentView("categories")
+    setSelectedCategory(null)
   }
 
   const handleBackFromDetails = () => {
-    setCurrentView("lines")
-    setSelectedLine(null)
+    setCurrentView("routes")
+    setSelectedRoute(null)
   }
 
   return (
     <View style={{ flex: 1 }}>
-      {currentView === "sindicates" && (
+      {currentView === "categories" && (
         <SindicateList 
-          sindicates={sindicates} 
-          onSelectSindicate={handleSelectSindicate} 
+          categories={categories} 
+          onSelectCategory={handleSelectCategory} 
         />
       )}
 
-      {currentView === "lines" && selectedSindicate && (
+      {currentView === "routes" && selectedCategory && (
         <LinesList 
-          sindicate={selectedSindicate} 
-          onSelectLine={handleSelectLine} 
-          onBack={handleBackFromLines} 
+          category={selectedCategory} 
+          onSelectRoute={handleSelectRoute} 
+          onBack={handleBackFromRoutes} 
         />
       )}
 
-      {currentView === "details" && selectedLine && (
+      {currentView === "details" && selectedRoute && (
         <LineDetails 
-          line={selectedLine} 
+          route={selectedRoute} 
           onBack={handleBackFromDetails} 
         />
       )}

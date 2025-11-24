@@ -1,121 +1,90 @@
 "use client"
 
-import { useState } from "react"
+import { getMinibuses, getTelefericos, type Minibus, type Teleferico } from "@/lib/api/routes"
+import { useEffect, useState } from "react"
 
-export interface TeleficoLine {
+export interface Route {
   id: string
-  number: number
+  type: "minibus" | "teleferico"
   name: string
-  color: string
-  stations: string[]
-  operator?: string
+  color?: string
+  stations?: string[]
+  origin?: string
+  destination?: string
+  number?: string
+  tarifa?: number
+  ruta?: { lat: number; lng: number }[]
+  estaciones?: { id: string; nombre: string; lat: number; lng: number; orden: number }[]
 }
 
-export interface Sindicate {
+export interface RouteCategory {
   id: string
   name: string
-  lines: TeleficoLine[]
+  type: "minibus" | "teleferico"
+  routes: Route[]
   description: string
 }
 
-const TELÉFERICO_DATA: Sindicate[] = [
-  {
-    id: "sindicate-1",
-    name: "Mi Teleférico",
-    description: "Red de transporte por cable en La Paz y El Alto",
-    lines: [
-      {
-        id: "line-red",
-        number: 1,
-        name: "Línea Roja",
-        color: "#EF4444",
-        operator: "Mi Teleférico",
-        stations: [
-          "Estación Central (Taypi Uta)",
-          "Estación Cementerio (Ajayuni)",
-          "Estación 16 de Julio (Jach'a Qhatu)",
-        ],
-      },
-      {
-        id: "line-yellow",
-        number: 2,
-        name: "Línea Amarilla",
-        color: "#FBBF24",
-        operator: "Mi Teleférico",
-        stations: [
-          "Estación Libertador (Chuqui Apu)",
-          "Estación Sopocachi (Suphu Kachi)",
-          "Estación Buenos Aires (Quta Uma)",
-          "Estación Mirador (Qhana Pata)",
-        ],
-      },
-      {
-        id: "line-green",
-        number: 3,
-        name: "Línea Verde",
-        color: "#22C55E",
-        operator: "Mi Teleférico",
-        stations: [
-          "Estación Libertador (Chuqui Apu)",
-          "Estación Alto Obrajes (Pata Obrajes)",
-          "Estación Obrajes (Aynacha Obrajes)",
-          "Estación Irpavi (Irpawi)",
-        ],
-      },
-      {
-        id: "line-blue",
-        number: 4,
-        name: "Línea Azul",
-        color: "#3B82F6",
-        operator: "Mi Teleférico",
-        stations: [
-          "Estación 16 de Julio (Jach'a Qhatu)",
-          "Estación Plaza Libertad (Pampa Katari)",
-          "Estación Plaza La Paz (Suma Qamaña)",
-          "Estación UPEA (Yatiña Uta)",
-          "Estación Río Seco (Waña Jawira)",
-        ],
-      },
-      {
-        id: "line-purple",
-        number: 5,
-        name: "Línea Púrpura",
-        color: "#A855F7",
-        operator: "Mi Teleférico",
-        stations: [
-          "Estación 6 de Marzo (Sartañani)",
-          "Estación Faro Murillo (Katari)",
-          "Estación Obelisco (Utjawi)",
-        ],
-      },
-      {
-        id: "line-cyan",
-        number: 6,
-        name: "Línea Celeste",
-        color: "#06B6D4",
-        operator: "Mi Teleférico",
-        stations: [
-          "Estación Libertador / Curva de Holguín (Chuqui Apu)",
-          "Estación San Jorge (Kantutani)",
-          "Estación Del Poeta (Jalsuri)",
-          "Estación Prado (Chuqi Yapu)",
-        ],
-      },
-    ],
-  },
-]
-
 export function useRoutes() {
-  const [selectedSindicate, setSelectedSindicate] = useState<Sindicate | null>(
-    null
-  )
-  const [selectedLine, setSelectedLine] = useState<TeleficoLine | null>(null)
+  const [categories, setCategories] = useState<RouteCategory[]>([])
+  const [selectedCategory, setSelectedCategory] = useState<RouteCategory | null>(null)
+  const [selectedRoute, setSelectedRoute] = useState<Route | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    async function fetchRoutes() {
+      try {
+        setLoading(true)
+        const [minibuses, telefericos] = await Promise.all([getMinibuses(), getTelefericos()])
+
+        const minibusCategory: RouteCategory = {
+          id: "minibuses",
+          name: "Minibuses",
+          type: "minibus",
+          description: "Rutas de minibuses en La Paz",
+          routes: minibuses.map((m: Minibus) => ({
+            id: m.id,
+            type: "minibus" as const,
+            name: m.rutaNombre,
+            number: m.linea,
+            color: "#6B7280", // Default color for minibuses
+            ruta: m.ruta,
+          })),
+        }
+
+        const telefericoCategory: RouteCategory = {
+          id: "telefericos",
+          name: "Teleféricos",
+          type: "teleferico",
+          description: "Red de teleféricos Mi Teleférico",
+          routes: telefericos.map((t: Teleferico) => ({
+            id: t.id,
+            type: "teleferico" as const,
+            name: t.nombre,
+            color: t.color,
+            estaciones: t.estaciones,
+          })),
+        }
+
+        setCategories([minibusCategory, telefericoCategory])
+      } catch (err: any) {
+        setError(err.message || "Error al cargar las rutas")
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchRoutes()
+  }, [])
 
   return {
-    sindicates: TELÉFERICO_DATA,
-    selectedSindicate,
-    setSelectedSindicate,
-    selectedLine,
-    setSelectedLine,
+    categories,
+    selectedCategory,
+    setSelectedCategory,
+    selectedRoute,
+    setSelectedRoute,
+    loading,
+    error,
   }
 }

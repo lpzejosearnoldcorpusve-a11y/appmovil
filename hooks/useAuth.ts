@@ -1,51 +1,55 @@
-import { supabase } from "@/lib/supabase"
+import { apiLogin, apiRegister } from "@/lib/api/auth"
 import type { AuthError, LoginCredentials, SignupCredentials, User } from "@/types/auth.types"
+import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useEffect, useState } from "react"
 
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null)
+  const [token, setToken] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<AuthError | null>(null)
 
   useEffect(() => {
-    console.log("🔧 useAuth: Iniciando verificación de sesión...")
-    
-    // Check active session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log("🔧 useAuth: Sesión obtenida:", { 
-        hasSession: !!session,
-        userEmail: session?.user?.email 
-      })
-      setUser((session?.user as User) || null)
-      setLoading(false)
-    })
-
-    // Listen for auth changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      console.log("🔧 useAuth: Estado cambió:", { 
-        event: _event,
-        hasSession: !!session 
-      })
-      setUser((session?.user as User) || null)
-    })
-
-    return () => subscription.unsubscribe()
+    checkAuthStatus()
   }, [])
+
+  const checkAuthStatus = async () => {
+    try {
+      const [storedToken, storedUser] = await Promise.all([
+        AsyncStorage.getItem("auth_token"),
+        AsyncStorage.getItem("auth_user")
+      ])
+
+      if (storedToken && storedUser) {
+        setToken(storedToken)
+        setUser(JSON.parse(storedUser))
+      }
+    } catch (err: any) {
+      console.error("Error checking auth status:", err)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const signIn = async ({ email, password }: LoginCredentials) => {
     try {
       setLoading(true)
       setError(null)
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      })
-      if (error) throw error
-      return { data, error: null }
+
+      const response = await apiLogin(email, password)
+      
+      // Guardar en AsyncStorage en lugar de localStorage
+      await Promise.all([
+        AsyncStorage.setItem("auth_token", response.token),
+        AsyncStorage.setItem("auth_user", JSON.stringify(response.user))
+      ])
+
+      setToken(response.token)
+      setUser(response.user)
+
+      return { data: response, error: null }
     } catch (err: any) {
-      const authError = { message: err.message }
+      const authError = { message: err.message || "Error al iniciar sesión" }
       setError(authError)
       return { data: null, error: authError }
     } finally {
@@ -53,18 +57,23 @@ export function useAuth() {
     }
   }
 
-  const signUp = async ({ email, password }: SignupCredentials) => {
+  const signUp = async (credentials: SignupCredentials) => {
     try {
       setLoading(true)
       setError(null)
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-      })
-      if (error) throw error
-      return { data, error: null }
+
+      const response = await apiRegister(
+        credentials.nombres,
+        credentials.apellidos,
+        credentials.email,
+        credentials.telefono,
+        credentials.password,
+        credentials.confirmPassword,
+      )
+
+      return { data: response, error: null }
     } catch (err: any) {
-      const authError = { message: err.message }
+      const authError = { message: err.message || "Error al registrar usuario" }
       setError(authError)
       return { data: null, error: authError }
     } finally {
@@ -76,8 +85,15 @@ export function useAuth() {
     try {
       setLoading(true)
       setError(null)
-      const { error } = await supabase.auth.signOut()
-      if (error) throw error
+
+      // Remover de AsyncStorage
+      await Promise.all([
+        AsyncStorage.removeItem("auth_token"),
+        AsyncStorage.removeItem("auth_user")
+      ])
+
+      setToken(null)
+      setUser(null)
     } catch (err: any) {
       setError({ message: err.message })
     } finally {
@@ -85,53 +101,13 @@ export function useAuth() {
     }
   }
 
-  const verifyOTP = async (email: string, token: string, type: "login" | "signup") => {
-    try {
-      setLoading(true)
-      setError(null)
-      const { data, error } = await supabase.auth.verifyOtp({
-        email,
-        token,
-        type: type === "login" ? "email" : "signup",
-      })
-      if (error) throw error
-      return { data, error: null }
-    } catch (err: any) {
-      const authError = { message: err.message }
-      setError(authError)
-      return { data: null, error: authError }
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const resendOTP = async (email: string) => {
-    try {
-      setLoading(true)
-      setError(null)
-      const { error } = await supabase.auth.resend({
-        type: "signup",
-        email,
-      })
-      if (error) throw error
-      return { error: null }
-    } catch (err: any) {
-      const authError = { message: err.message }
-      setError(authError)
-      return { error: authError }
-    } finally {
-      setLoading(false)
-    }
-  }
-
   return {
     user,
+    token,
     loading,
     error,
     signIn,
     signUp,
     signOut,
-    verifyOTP,
-    resendOTP,
   }
 }

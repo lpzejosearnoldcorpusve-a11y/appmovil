@@ -1,67 +1,62 @@
+import { Route, RouteCategory } from "@/hooks/useRoutes"
 import { ChevronLeft } from "lucide-react-native"
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native"
 
-interface Line {
-  id: string
-  number: number
-  name: string
-  color: string
-  operator?: string
-  stations: string[]
-}
-
 interface LinesListProps {
-  sindicate: {
-    name: string
-    lines: Line[]
-  }
-  onSelectLine: (line: Line) => void
+  category: RouteCategory
+  onSelectRoute: (route: Route) => void
   onBack: () => void
 }
 
-export function LinesList({ sindicate, onSelectLine, onBack }: LinesListProps) {
+export function LinesList({ category, onSelectRoute, onBack }: LinesListProps) {
   return (
     <ScrollView style={styles.container}>
       <View style={styles.content}>
         <TouchableOpacity onPress={onBack} style={styles.backButton}>
-          <ChevronLeft size={24} color="#0369A1" />
+          <ChevronLeft size={24} color="#06b6d4" />
           <Text style={styles.backText}>Volver</Text>
         </TouchableOpacity>
 
-        <Text style={styles.title}>{sindicate.name}</Text>
-        <Text style={styles.subtitle}>Líneas disponibles</Text>
+        <Text style={styles.title}>{category.name}</Text>
+        <Text style={styles.subtitle}>Rutas disponibles</Text>
 
-        {sindicate.lines.map((line) => (
+        {category.routes.map((route) => (
           <TouchableOpacity
-            key={line.id}
-            onPress={() => onSelectLine(line)}
+            key={route.id}
+            onPress={() => onSelectRoute(route)}
             style={[
-              styles.lineCard,
-              { 
-                borderColor: line.color, 
-                backgroundColor: line.color + "15" 
+              styles.routeCard,
+              {
+                borderColor: route.color || "#6B7280",
+                backgroundColor: (route.color || "#6B7280") + "15"
               }
             ]}
           >
-            <View style={styles.lineHeader}>
+            <View style={styles.routeHeader}>
               <View
                 style={[
-                  styles.lineNumberCircle,
-                  { backgroundColor: line.color }
+                  styles.routeColorCircle,
+                  { backgroundColor: route.color || "#6B7280" }
                 ]}
               >
-                <Text style={styles.lineNumber}>{line.number}</Text>
+                <Text style={styles.routeNumber}>
+                  {route.type === "minibus" ? (route.number || "?") : "T"}
+                </Text>
               </View>
-              <View style={styles.lineInfo}>
-                <Text style={styles.lineName}>{line.name}</Text>
-                {line.operator && (
-                  <Text style={styles.operator}>{line.operator}</Text>
+              <View style={styles.routeInfo}>
+                <Text style={styles.routeName}>{route.name}</Text>
+                {route.type === "teleferico" && route.estaciones && (
+                  <Text style={styles.routeStations}>
+                    {route.estaciones.length} estaciones
+                  </Text>
+                )}
+                {route.type === "minibus" && route.ruta && (
+                  <Text style={styles.routeStations}>
+                    {route.ruta.length} puntos de ruta
+                  </Text>
                 )}
               </View>
             </View>
-            <Text style={styles.stationsCount}>
-              {line.stations.length} estaciones
-            </Text>
           </TouchableOpacity>
         ))}
       </View>
@@ -72,7 +67,7 @@ export function LinesList({ sindicate, onSelectLine, onBack }: LinesListProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'white',
+    backgroundColor: '#0f172a',
   },
   content: {
     padding: 24,
@@ -83,69 +78,63 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   backText: {
-    color: '#0369A1',
+    color: '#06b6d4',
     marginLeft: 8,
     fontWeight: '600',
   },
   title: {
-    fontSize: 32,
+    fontSize: 28,
     fontWeight: 'bold',
-    color: '#0F172A',
+    color: '#ffffff',
     marginBottom: 8,
   },
   subtitle: {
-    color: '#475569',
+    fontSize: 16,
+    color: '#94a3b8',
     marginBottom: 24,
   },
-  lineCard: {
+  routeCard: {
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
-    borderWidth: 2,
-    // Shadow para iOS
+    borderWidth: 1,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
-      height: 1,
+      height: 2,
     },
     shadowOpacity: 0.1,
-    shadowRadius: 3,
-    // Shadow para Android
-    elevation: 2,
+    shadowRadius: 4,
+    elevation: 3,
   },
-  lineHeader: {
+  routeHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 8,
   },
-  lineNumberCircle: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    alignItems: 'center',
+  routeColorCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     justifyContent: 'center',
+    alignItems: 'center',
     marginRight: 12,
   },
-  lineNumber: {
-    color: 'white',
+  routeNumber: {
+    color: '#ffffff',
+    fontSize: 16,
     fontWeight: 'bold',
-    fontSize: 18,
   },
-  lineInfo: {
+  routeInfo: {
     flex: 1,
   },
-  lineName: {
+  routeName: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: '#0F172A',
+    fontWeight: '600',
+    color: '#ffffff',
+    marginBottom: 4,
   },
-  operator: {
-    color: '#475569',
+  routeStations: {
     fontSize: 14,
-  },
-  stationsCount: {
-    color: '#374151',
-    fontSize: 12,
-    marginLeft: 60, 
+    color: '#94a3b8',
   },
 })

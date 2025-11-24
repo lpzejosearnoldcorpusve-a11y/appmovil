@@ -24,11 +24,11 @@ export default function Page() {
   // Redirigir según el estado de autenticación
   if (user) {
     console.log("✅ Usuario autenticado, redirigiendo a tabs")
-    return <Redirect href="/(tabs)" />
+    return <Redirect href="/(tabs)/maps" />
   }
 
   console.log("❌ No autenticado, redirigiendo a login")
-  return <Redirect href="/login" />
+  return <Redirect href="/(auth)/login" />
 }
 
 const styles = StyleSheet.create({

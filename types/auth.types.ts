@@ -1,7 +1,12 @@
 export interface User {
   id: string
+  nombres: string
+  apellidos: string
   email: string
-  created_at: string
+  telefono: string
+  rol: string
+  createdAt: string
+  updatedAt?: string
 }
 
 export interface AuthError {
@@ -15,7 +20,17 @@ export interface LoginCredentials {
 }
 
 export interface SignupCredentials {
+  nombres: string
+  apellidos: string
   email: string
+  telefono: string
   password: string
   confirmPassword: string
+}
+
+export interface AuthState {
+  user: User | null
+  token: string | null
+  loading: boolean
+  error: AuthError | null
 }

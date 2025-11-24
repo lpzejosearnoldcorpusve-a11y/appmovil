@@ -1,216 +1,219 @@
-import { useAuth } from "@/hooks/useAuth"
-import { LinearGradient } from "expo-linear-gradient"
-import React, { useState } from "react"
+import { useAuth } from "@/hooks/useAuth";
+import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import React, { useState } from "react";
 import {
   ActivityIndicator,
-  Image,
-  KeyboardAvoidingView,
-  Platform,
+  Alert,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
-} from "react-native"
-import { OTPVerification } from "./OTPVerification"
+} from "react-native";
 
 export function LoginForm({ onSwitchToSignup }: { onSwitchToSignup: () => void }) {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
-  const [showOTP, setShowOTP] = useState(false)
-  const { signIn, verifyOTP, resendOTP, loading, error } = useAuth()
+  const [showPassword, setShowPassword] = useState(false) 
+  const { signIn, loading, error } = useAuth()
+  const router = useRouter()
 
   const handleLogin = async () => {
-    if (!email || !password) return
+    if (!email || !password) {
+      Alert.alert("Error", "Por favor completa todos los campos")
+      return
+    }
+    
+    // Validación básica de email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(email)) {
+      Alert.alert("Error", "Por favor ingresa un email válido")
+      return
+    }
+    
     const result = await signIn({ email, password })
-    if (result.data && !result.error) {
-      setShowOTP(true)
+    
+    if (result.data) {
+      // Redirigir manualmente después del login exitoso
+      console.log("✅ Login exitoso, usuario:", result.data.user)
+      console.log("🔄 Intentando redirigir a mapas...")
+      try {
+        await router.replace('/(tabs)/maps')
+        console.log("✅ Redirección exitosa")
+      } catch (error) {
+        console.error("❌ Error en redirección:", error)
+      }
+    } else {
+      console.log("❌ Login falló:", result.error)
     }
   }
 
-  const handleVerifyOTP = async (otp: string) => {
-    await verifyOTP(email, otp, "login")
+  const toggleShowPassword = () => {
+    setShowPassword(!showPassword)
   }
 
-  const handleResendOTP = async () => {
-    await resendOTP(email)
-  }
-
-  if (showOTP) {
-    return (
-      <OTPVerification
-        email={email}
-        onVerify={handleVerifyOTP}
-        onResend={handleResendOTP}
-        type="login"
-      />
-    )
-  }
+  // Mostrar alerta si hay error
+  React.useEffect(() => {
+    if (error) {
+      Alert.alert("Error de Autenticación", error.message)
+    }
+  }, [error])
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
+    <ScrollView 
+      contentContainerStyle={styles.container}
+      showsVerticalScrollIndicator={false}
+      keyboardShouldPersistTaps="handled" // Para mejor manejo del teclado
     >
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps="handled"
-      >
-        {/* Decorative elements */}
-        <View style={[styles.decorativeCircle, styles.decorativeTop]} />
-        <View style={[styles.decorativeCircle, styles.decorativeBottom]} />
+      {/* Elementos decorativos */}
+      <View style={styles.decorativeCircle1} />
+      <View style={styles.decorativeCircle2} />
 
-        {/* Logo */}
-        <View style={styles.logoContainer}>
-          <Image
-            source={require("../public/assets/logo.png")}
-            style={styles.logo}
+      {/* Logo */}
+      <View style={styles.logoContainer}>
+        <View style={styles.logoPlaceholder}>
+          {/* Reemplaza esto con tu imagen usando expo-image o react-native-fast-image */}
+          <Text style={styles.logoText}>Logo</Text>
+        </View>
+        <Text style={styles.title}>Bienvenido</Text>
+        <Text style={styles.subtitle}>Inicia sesión para continuar</Text>
+      </View>
+
+      {/* Formulario */}
+      <View style={styles.formContainer}>
+        <View style={styles.inputContainer}>
+          <Text style={styles.label}>Email</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="tu@email.com"
+            placeholderTextColor="#94a3b8"
+            value={email}
+            onChangeText={setEmail}
+            autoCapitalize="none"
+            keyboardType="email-address"
+            autoComplete="email"
+            returnKeyType="next"
+            editable={!loading}
           />
-          <Text style={styles.title}>Bienvenido</Text>
-          <Text style={styles.subtitle}>Inicia sesión para continuar</Text>
         </View>
 
-        {/* Form */}
-        <View style={styles.formContainer}>
-          {error && (
-            <View style={styles.errorContainer}>
-              <Text style={styles.errorText}>{error.message}</Text>
-            </View>
-          )}
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Email</Text>
+        <View style={styles.inputContainer}>
+          <Text style={styles.label}>Contraseña</Text>
+          <View style={styles.passwordInputContainer}>
             <TextInput
-              style={styles.input}
-              placeholder="tu@email.com"
-              placeholderTextColor="#64748b"
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoComplete="email"
-              editable={!loading}
-            />
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Contraseña</Text>
-            <TextInput
-              style={styles.input}
+              style={styles.passwordInput}
               placeholder="••••••••"
-              placeholderTextColor="#64748b"
+              placeholderTextColor="#94a3b8"
               value={password}
               onChangeText={setPassword}
-              secureTextEntry
-              autoCapitalize="none"
+              secureTextEntry={!showPassword}
               autoComplete="password"
+              returnKeyType="done"
+              onSubmitEditing={handleLogin} // Permite enviar con Enter
               editable={!loading}
             />
-          </View>
-
-          <TouchableOpacity
-            onPress={handleLogin}
-            disabled={loading}
-            activeOpacity={0.8}
-            style={styles.buttonWrapper}
-          >
-            <LinearGradient
-              colors={["#06b6d4", "#2563eb"]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={[styles.button, loading && styles.buttonDisabled]}
+            <TouchableOpacity 
+              style={styles.eyeIcon}
+              onPress={toggleShowPassword}
+              disabled={loading}
             >
-              {loading ? (
-                <ActivityIndicator color="#ffffff" />
-              ) : (
-                <Text style={styles.buttonText}>Iniciar Sesión</Text>
-              )}
-            </LinearGradient>
-          </TouchableOpacity>
-
-          <View style={styles.signupContainer}>
-            <Text style={styles.signupText}>¿No tienes cuenta? </Text>
-            <TouchableOpacity onPress={onSwitchToSignup}>
-              <Text style={styles.signupLink}>Regístrate</Text>
+              <Ionicons 
+                name={showPassword ? "eye-off" : "eye"} 
+                size={24} 
+                color="#94a3b8" 
+              />
             </TouchableOpacity>
           </View>
         </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+
+        {/* Botón de Iniciar Sesión */}
+        <TouchableOpacity
+          style={[styles.loginButton, loading && styles.disabledButton]}
+          onPress={handleLogin}
+          disabled={loading}
+        >
+          {loading ? (
+            <ActivityIndicator color="#ffffff" />
+          ) : (
+            <Text style={styles.loginButtonText}>Iniciar Sesión</Text>
+          )}
+        </TouchableOpacity>
+
+        {/* Enlace a Registro */}
+        <View style={styles.signupContainer}>
+          <Text style={styles.signupText}>¿No tienes cuenta? </Text>
+          <TouchableOpacity onPress={loading ? undefined : onSwitchToSignup}>
+            <Text style={styles.signupLink}>Regístrate</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </ScrollView>
   )
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    backgroundColor: "#0f172a",
-  },
-  scrollContent: {
     flexGrow: 1,
-    justifyContent: "center",
+    backgroundColor: "#0f172a",
     paddingHorizontal: 24,
     paddingVertical: 40,
+    justifyContent: "center",
   },
-  decorativeCircle: {
+  decorativeCircle1: {
     position: "absolute",
-    borderRadius: 9999,
-    opacity: 0.1,
-  },
-  decorativeTop: {
     top: 80,
     right: 40,
     width: 128,
     height: 128,
-    backgroundColor: "#a855f7",
+    backgroundColor: "rgba(168, 85, 247, 0.1)",
+    borderRadius: 64,
   },
-  decorativeBottom: {
+  decorativeCircle2: {
+    position: "absolute",
     bottom: 160,
     left: 40,
     width: 160,
     height: 160,
-    backgroundColor: "#06b6d4",
+    backgroundColor: "rgba(6, 182, 212, 0.1)",
+    borderRadius: 80,
   },
   logoContainer: {
     alignItems: "center",
     marginBottom: 48,
     zIndex: 10,
   },
-  logo: {
+  logoPlaceholder: {
     width: 96,
     height: 96,
+    backgroundColor: "#1e293b",
     borderRadius: 16,
+    justifyContent: "center",
+    alignItems: "center",
     marginBottom: 16,
   },
+  logoText: {
+    color: "#cbd5e1",
+    fontSize: 16,
+  },
   title: {
-    fontSize: 36,
+    fontSize: 32,
     fontWeight: "bold",
     color: "#ffffff",
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 18,
-    color: "#67e8f9",
+    color: "#22d3ee",
   },
   formContainer: {
-    maxWidth: 448,
     width: "100%",
+    maxWidth: 400,
     alignSelf: "center",
     zIndex: 10,
   },
-  errorContainer: {
-    backgroundColor: "rgba(236, 72, 153, 0.2)",
-    borderWidth: 1,
-    borderColor: "#ec4899",
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 16,
-  },
-  errorText: {
-    color: "#fbcfe8",
-    textAlign: "center",
-  },
-  inputGroup: {
+  inputContainer: {
     marginBottom: 16,
   },
   label: {
@@ -220,6 +223,7 @@ const styles = StyleSheet.create({
     fontWeight: "500",
   },
   input: {
+    width: "100%",
     backgroundColor: "#1e293b",
     color: "#ffffff",
     paddingHorizontal: 20,
@@ -229,24 +233,51 @@ const styles = StyleSheet.create({
     borderColor: "rgba(6, 182, 212, 0.3)",
     fontSize: 16,
   },
-  buttonWrapper: {
-    marginTop: 24,
-    borderRadius: 16,
-    overflow: "hidden",
+  passwordInputContainer: {
+    position: "relative",
+    width: "100%",
   },
-  button: {
+  passwordInput: {
+    width: "100%",
+    backgroundColor: "#1e293b",
+    color: "#ffffff",
+    paddingHorizontal: 20,
     paddingVertical: 16,
-    alignItems: "center",
-    justifyContent: "center",
     borderRadius: 16,
+    borderWidth: 2,
+    borderColor: "rgba(6, 182, 212, 0.3)",
+    fontSize: 16,
+    paddingRight: 50, // Espacio para el icono
   },
-  buttonDisabled: {
+  eyeIcon: {
+    position: "absolute",
+    right: 16,
+    top: 16,
+    padding: 4,
+  },
+  loginButton: {
+    width: "100%",
+    backgroundColor: "#06b6d4",
+    paddingVertical: 16,
+    borderRadius: 16,
+    marginTop: 24,
+    shadowColor: "#06b6d4",
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.5,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  disabledButton: {
     opacity: 0.5,
   },
-  buttonText: {
+  loginButtonText: {
     color: "#ffffff",
     fontWeight: "bold",
     fontSize: 18,
+    textAlign: "center",
   },
   signupContainer: {
     flexDirection: "row",
@@ -255,10 +286,10 @@ const styles = StyleSheet.create({
     marginTop: 24,
   },
   signupText: {
-    color: "#9ca3af",
+    color: "#94a3b8",
   },
   signupLink: {
-    color: "#f9a8d4",
+    color: "#f472b6",
     fontWeight: "bold",
     marginLeft: 4,
   },

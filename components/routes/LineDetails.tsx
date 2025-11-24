@@ -1,85 +1,115 @@
+import { Route } from "@/hooks/useRoutes";
 import { ChevronLeft, Train } from "lucide-react-native";
 import React from 'react';
 import {
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
 } from "react-native";
 
-interface Line {
-  id: string;
-  number: number;
-  name: string;
-  color: string;
-  operator?: string;
-  stations: string[];
-}
-
 interface LineDetailsProps {
-  line: Line;
+  route: Route;
   onBack: () => void;
 }
 
-export function LineDetails({ line, onBack }: LineDetailsProps) {
+export function LineDetails({ route, onBack }: LineDetailsProps) {
   return (
     <ScrollView style={styles.container}>
       <View style={styles.content}>
         <TouchableOpacity onPress={onBack} style={styles.backButton}>
-          <ChevronLeft size={24} color="#0369A1" />
+          <ChevronLeft size={24} color="#06b6d4" />
           <Text style={styles.backText}>Volver</Text>
         </TouchableOpacity>
 
         <View style={styles.header}>
           <View
             style={[
-              styles.lineNumberCircle,
-              { backgroundColor: line.color }
+              styles.routeColorCircle,
+              { backgroundColor: route.color || "#6B7280" }
             ]}
           >
-            <Text style={styles.lineNumber}>{line.number}</Text>
+            <Text style={styles.routeNumber}>
+              {route.type === "minibus" ? (route.number || "?") : "T"}
+            </Text>
           </View>
           <View style={styles.headerText}>
-            <Text style={styles.lineName}>{line.name}</Text>
-            {line.operator && (
-              <Text style={styles.operator}>{line.operator}</Text>
-            )}
+            <Text style={styles.routeName}>{route.name}</Text>
+            <Text style={styles.routeType}>
+              {route.type === "minibus" ? "Minibus" : "Teleférico"}
+            </Text>
           </View>
         </View>
 
         <View style={styles.stationsInfo}>
           <View style={styles.stationsHeader}>
-            <Train size={20} color={line.color} />
-            <Text style={styles.stationsTitle}>Estaciones</Text>
+            <Train size={20} color={route.color || "#6B7280"} />
+            <Text style={styles.stationsTitle}>
+              {route.type === "teleferico" ? "Estaciones" : "Puntos de Ruta"}
+            </Text>
           </View>
           <Text style={styles.stationsCount}>
-            {line.stations.length} paradas disponibles
+            {route.type === "teleferico" && route.estaciones
+              ? `${route.estaciones.length} estaciones disponibles`
+              : route.type === "minibus" && route.ruta
+              ? `${route.ruta.length} puntos de ruta`
+              : "Información no disponible"
+            }
           </Text>
         </View>
 
         <View style={styles.routeSection}>
           <Text style={styles.routeTitle}>Recorrido</Text>
-          {line.stations.map((station, index) => (
-            <View key={index} style={styles.stationItem}>
-              <View style={styles.stationMarkerContainer}>
-                <View
-                  style={[
-                    styles.stationMarker,
-                    { backgroundColor: line.color }
-                  ]}
-                >
-                  <Text style={styles.stationNumber}>{index + 1}</Text>
+          {route.type === "teleferico" && route.estaciones ? (
+            route.estaciones
+              .sort((a, b) => a.orden - b.orden)
+              .map((station, index) => (
+                <View key={station.id} style={styles.stationItem}>
+                  <View style={styles.stationMarkerContainer}>
+                    <View
+                      style={[
+                        styles.stationMarker,
+                        { backgroundColor: route.color || "#6B7280" }
+                      ]}
+                    >
+                      <Text style={styles.stationNumber}>{station.orden}</Text>
+                    </View>
+                    {index < route.estaciones!.length - 1 && (
+                      <View style={styles.stationLine} />
+                    )}
+                  </View>
+                  <View style={styles.stationNameContainer}>
+                    <Text style={styles.stationName}>{station.nombre}</Text>
+                  </View>
                 </View>
-                {index < line.stations.length - 1 && (
-                  <View style={styles.stationLine} />
-                )}
+              ))
+          ) : route.type === "minibus" && route.ruta ? (
+            route.ruta.map((point, index) => (
+              <View key={index} style={styles.stationItem}>
+                <View style={styles.stationMarkerContainer}>
+                  <View
+                    style={[
+                      styles.stationMarker,
+                      { backgroundColor: route.color || "#6B7280" }
+                    ]}
+                  >
+                    <Text style={styles.stationNumber}>{index + 1}</Text>
+                  </View>
+                  {index < route.ruta!.length - 1 && (
+                    <View style={styles.stationLine} />
+                  )}
+                </View>
+                <View style={styles.stationNameContainer}>
+                  <Text style={styles.stationName}>
+                    Punto {index + 1} ({point.lat.toFixed(4)}, {point.lng.toFixed(4)})
+                  </Text>
+                </View>
               </View>
-              <View style={styles.stationNameContainer}>
-                <Text style={styles.stationName}>{station}</Text>
-              </View>
-            </View>
-          ))}
+            ))
+          ) : (
+            <Text style={styles.noDataText}>No hay información de recorrido disponible</Text>
+          )}
         </View>
       </View>
     </ScrollView>
@@ -89,7 +119,7 @@ export function LineDetails({ line, onBack }: LineDetailsProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'white',
+    backgroundColor: '#0f172a',
   },
   content: {
     padding: 24,
@@ -100,7 +130,7 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   backText: {
-    color: '#0369A1',
+    color: '#06b6d4',
     marginLeft: 8,
     fontWeight: '600',
   },
@@ -109,7 +139,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 24,
   },
-  lineNumberCircle: {
+  routeColorCircle: {
     width: 80,
     height: 80,
     borderRadius: 40,
@@ -117,7 +147,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginRight: 16,
   },
-  lineNumber: {
+  routeNumber: {
     color: 'white',
     fontWeight: 'bold',
     fontSize: 24,
@@ -125,17 +155,17 @@ const styles = StyleSheet.create({
   headerText: {
     flex: 1,
   },
-  lineName: {
+  routeName: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#0F172A',
+    color: '#ffffff',
   },
-  operator: {
-    color: '#475569',
+  routeType: {
+    color: '#94a3b8',
     marginTop: 4,
   },
   stationsInfo: {
-    backgroundColor: '#F1F5F9',
+    backgroundColor: '#1e293b',
     borderRadius: 12,
     padding: 16,
     marginBottom: 24,
@@ -146,12 +176,12 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   stationsTitle: {
-    color: '#0F172A',
+    color: '#ffffff',
     fontWeight: '600',
     marginLeft: 12,
   },
   stationsCount: {
-    color: '#475569',
+    color: '#94a3b8',
   },
   routeSection: {
     marginBottom: 24,
@@ -159,7 +189,7 @@ const styles = StyleSheet.create({
   routeTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#0F172A',
+    color: '#ffffff',
     marginBottom: 16,
   },
   stationItem: {
@@ -180,21 +210,27 @@ const styles = StyleSheet.create({
   },
   stationNumber: {
     color: 'white',
-    fontSize: 12,
     fontWeight: 'bold',
+    fontSize: 14,
   },
   stationLine: {
-    width: 1,
-    backgroundColor: '#CBD5E1',
-    marginVertical: 8,
+    width: 2,
     height: 40,
+    backgroundColor: '#94a3b8',
+    marginTop: 8,
   },
   stationNameContainer: {
     flex: 1,
-    paddingTop: 8,
+    paddingTop: 6,
   },
   stationName: {
-    color: '#0F172A',
-    fontWeight: '600',
+    color: '#ffffff',
+    fontSize: 16,
   },
-});
+  noDataText: {
+    color: '#94a3b8',
+    fontSize: 16,
+    textAlign: 'center',
+    padding: 20,
+  },
+})

@@ -1,5 +1,5 @@
 import { Tabs } from "expo-router"
-import { Bell, DollarSign, MapPin, Route, User } from "lucide-react-native"; // ← Cambio aquí
+import { Bus, Cable, DollarSign, MapPin, User } from "lucide-react-native"
 
 export default function TabLayout() {
   return (
@@ -28,10 +28,17 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="routes"
+        name="minibuses"
         options={{
-          title: "Rutas",
-          tabBarIcon: ({ color, size }) => <Route size={size} color={color} />,
+          title: "Minibuses",
+          tabBarIcon: ({ color, size }) => <Bus size={size} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="telefericos"
+        options={{
+          title: "Teleféricos",
+          tabBarIcon: ({ color, size }) => <Cable size={size} color={color} />,
         }}
       />
       <Tabs.Screen
@@ -39,13 +46,6 @@ export default function TabLayout() {
         options={{
           title: "Tarifas",
           tabBarIcon: ({ color, size }) => <DollarSign size={size} color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="notifications"
-        options={{
-          title: "Notificaciones",
-          tabBarIcon: ({ color, size }) => <Bell size={size} color={color} />,
         }}
       />
       <Tabs.Screen

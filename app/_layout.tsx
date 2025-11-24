@@ -13,10 +13,30 @@ export default function RootLayout() {
       const inAuthGroup = segments[0] === '(auth)'
       const inTabsGroup = segments[0] === '(tabs)'
 
+      console.log("🔍 Layout navigation check:", {
+        user: !!user,
+        loading,
+        segments,
+        inAuthGroup,
+        inTabsGroup
+      })
+
       if (!user && !inAuthGroup) {
-        router.replace('/(auth)/login')
+        console.log("👤 No user, redirecting to login")
+        try {
+          router.replace('/(auth)/login')
+        } catch (error) {
+          console.error("❌ Error redirecting to login:", error)
+        }
       } else if (user && inAuthGroup) {
-        router.replace('/(tabs)')
+        console.log("✅ User authenticated, redirecting to maps")
+        try {
+          router.replace('/(tabs)/maps')
+        } catch (error) {
+          console.error("❌ Error redirecting to maps:", error)
+        }
+      } else {
+        console.log("⏳ Navigation state stable")
       }
     }
   }, [user, loading, segments])
